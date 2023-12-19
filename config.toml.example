@@ -1,0 +1,13 @@
+output = "non-standard.csv"
+
+[nodes.data]
+rpc_host = "http://127.0.0.1"
+rpc_port = 8332
+rpc_user = "data"
+rpc_pass = ""
+
+[nodes.test]
+rpc_host = "http://127.0.0.1"
+rpc_port = 7332
+rpc_user = "test"
+rpc_pass = ""
