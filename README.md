@@ -40,6 +40,9 @@ sequenceDiagram
     end
 ```
 
+Known limitations:
+- Transactions depending on a rejected transaction are rejected as `missing-inputs`
+- Does not report full-RBF replacements mined
 
 ## Setup
 
