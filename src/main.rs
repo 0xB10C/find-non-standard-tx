@@ -37,8 +37,8 @@ fn rpc_client(settings: &Config, node: &str) -> Client {
 struct ResultRow {
     height: u64,
     miner: String,
-    txid: Txid,
     reject_reason: String,
+    txid: Txid,
     vsize: usize,
     inputs: usize,
     outputs: usize,
