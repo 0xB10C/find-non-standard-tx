@@ -1,11 +1,14 @@
 use bitcoin_pool_identification::{parse_json, PoolIdentification, DEFAULT_MAINNET_POOL_LIST};
-use bitcoincore_rpc::bitcoin::{Amount, Network, Txid};
+use bitcoincore_rpc::bitcoin::{Amount, Block, Network, Txid};
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 use config::Config;
 use csv::Writer;
+use std::thread;
+use std::time::Duration;
 
 const DUPLICATE_BLOCK_ERROR: &str = "\"duplicate\"";
 const TX_ALREADY_IN_MEMPOOL_REJECTION_REASON: &str = "txn-already-in-mempool";
+const BLOCK_SUBMIT_RETRY_TIME: Duration = Duration::from_secs(5);
 
 fn rpc_client(settings: &Config, node: &str) -> Client {
     Client::new(
@@ -120,17 +123,28 @@ fn main() {
             }
         }
 
-        match test_node.submit_block(&block) {
-            Ok(_) => {
-                for row in csv_rows.iter() {
-                    wtr.serialize(&row).unwrap();
-                    println!(
-                        "Transaction rejected in block {}: txid: {} reason: {:?} pool: {}",
-                        row.height, row.txid, row.reject_reason, row.miner,
-                    );
-                }
-                csv_rows.clear();
+        let block_was_unknown = submit_block(&test_node, &block, current_height);
+        if block_was_unknown {
+            for row in csv_rows.iter() {
+                wtr.serialize(&row).unwrap();
+                println!(
+                    "Transaction rejected in block {}: txid: {} reason: {:?} pool: {}",
+                    row.height, row.txid, row.reject_reason, row.miner,
+                );
             }
+        }
+        csv_rows.clear();
+        current_height += 1;
+        wtr.flush().unwrap();
+    }
+}
+
+// Either submits the block (if needed by retrying) or panics on an unhandled error
+// returns true if the node didn't know about the block; false if the node already knew about it
+fn submit_block(node: &Client, block: &Block, current_height: u64) -> bool {
+    loop {
+        match node.submit_block(&block) {
+            Ok(_) => return true,
             Err(e) => {
                 match e {
                     // The submitblock RPC returns an error DUPLICATE_BLOCK_ERROR, when
@@ -138,16 +152,31 @@ fn main() {
                     // expected.
                     bitcoincore_rpc::Error::ReturnedError(s) => {
                         if s == DUPLICATE_BLOCK_ERROR {
-                            println!("Block {} was already known to the 'test' Bitcoin Core node. Skipping..", current_height);
+                            println!("Block {} is already known by the 'test' Bitcoin Core node. Skipping..", current_height);
+                            return false;
                         } else {
                             panic!("ReturnedError({})", s);
+                        }
+                    }
+                    bitcoincore_rpc::Error::JsonRpc(e) => {
+                        match e {
+                            // If we are sending blocks and transactions too fast, Bitcoin Core
+                            // RPC server receive buffer might fill up and we receive a transport
+                            // error: Resource temporarily unavailable.
+                            bitcoincore_rpc::jsonrpc::Error::Transport(e) => {
+                                println!("Transport error while submitting block: {}", e);
+                                println!(
+                                    "Waiting for {:?} seconds before retrying...",
+                                    BLOCK_SUBMIT_RETRY_TIME
+                                );
+                                thread::sleep(BLOCK_SUBMIT_RETRY_TIME);
+                            }
+                            _ => panic!("{}", e),
                         }
                     }
                     _ => panic!("{}", e),
                 }
             }
         }
-        current_height += 1;
     }
-    wtr.flush().unwrap();
 }
