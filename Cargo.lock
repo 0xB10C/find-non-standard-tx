@@ -50,6 +50,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-pool-identification"
+version = "0.3.0"
+source = "git+https://github.com/0xb10c/rust-bitcoin-pool-identification?branch=2023-12-online-update-with-fallback#ae335356547ed4997d057b7c71cd881d04b1ff3c"
+dependencies = [
+ "bitcoin",
+ "hex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bitcoin_hashes"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -144,6 +155,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
 name = "hex-conservative"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -216,6 +233,7 @@ dependencies = [
 name = "non-standard"
 version = "0.1.0"
 dependencies = [
+ "bitcoin-pool-identification",
  "bitcoincore-rpc",
  "config",
  "csv",

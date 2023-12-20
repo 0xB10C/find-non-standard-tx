@@ -1,4 +1,5 @@
-use bitcoincore_rpc::bitcoin::Amount;
+use bitcoin_pool_identification::{parse_json, PoolIdentification, DEFAULT_MAINNET_POOL_LIST};
+use bitcoincore_rpc::bitcoin::{Amount, Network, Txid};
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 use config::Config;
 use csv::Writer;
@@ -32,6 +33,7 @@ fn rpc_client(settings: &Config, node: &str) -> Client {
 #[derive(Debug, serde::Serialize)]
 struct ResultRow {
     height: u64,
+    miner: String,
     txid: Txid,
     reject_reason: String,
     vsize: usize,
@@ -66,20 +68,18 @@ fn main() {
         .expect("No 'output' defined in the configuration");
     let mut wtr = Writer::from_path(output_file.clone())
         .expect(&format!("Can't open output file {}", output_file));
-    wtr.write_record(&[
-        "height",
-        "txid",
-        "reject_reason",
-        "vsize",
-        "inputs",
-        "outputs",
-    ])
-    .unwrap();
+
+    let pools = parse_json(DEFAULT_MAINNET_POOL_LIST);
 
     let mut current_height = start_height;
     while current_height <= data_node.get_block_count().unwrap() {
         let block_hash = data_node.get_block_hash(current_height).unwrap();
         let block = data_node.get_block(&block_hash).unwrap();
+
+        let pool_name = match block.identify_pool(Network::Bitcoin, &pools) {
+            Some(result) => result.pool.name,
+            None => "Unknown".to_string(),
+        };
 
         let mut csv_rows = vec![];
         for tx in block.txdata.iter() {
@@ -104,15 +104,15 @@ fn main() {
                 // rejected because they are "already known" (as the blocks
                 // are already known). We don't care about these cases and
                 // filter them out when we receive an error on submitblock.
-                csv_rows.push(
-                    ResultRow{
-                        height: current_height,
-                        txid: tx.txid(),
-                        reject_reason,
-                        vsize: tx.vsize(),
-                        inputs: tx.input.len(),
-                        outputs: tx.output.len(),
-                    });
+                csv_rows.push(ResultRow {
+                    height: current_height,
+                    miner: pool_name.clone(),
+                    txid: tx.txid(),
+                    reject_reason,
+                    vsize: tx.vsize(),
+                    inputs: tx.input.len(),
+                    outputs: tx.output.len(),
+                });
             } else {
                 test_node
                     .send_raw_transaction(tx, Some(Amount::MAX_MONEY), Some(Amount::MAX_MONEY))
@@ -125,8 +125,8 @@ fn main() {
                 for row in csv_rows.iter() {
                     wtr.serialize(&row).unwrap();
                     println!(
-                        "Transaction rejected in block {}: txid={} reason={:?}",
-                        row.height, row.txid, row.reject_reason
+                        "Transaction rejected in block {}: txid: {} reason: {:?} pool: {}",
+                        row.height, row.txid, row.reject_reason, row.miner,
                     );
                 }
                 csv_rows.clear();
