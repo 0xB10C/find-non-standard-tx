@@ -1,3 +1,4 @@
+use bitcoincore_rpc::bitcoin::Amount;
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 use config::Config;
 use csv::Writer;
@@ -102,7 +103,9 @@ fn main() {
                     tx.output.len().to_string(),
                 ]);
             } else {
-                test_node.send_raw_transaction(tx).unwrap();
+                test_node
+                    .send_raw_transaction(tx, Some(Amount::MAX_MONEY), Some(Amount::MAX_MONEY))
+                    .unwrap();
             }
         }
 
