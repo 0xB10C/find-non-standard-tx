@@ -136,7 +136,7 @@ fn main() {
                                             e
                                         );
                                         println!(
-                                            "Waiting for {:?} seconds before retrying...",
+                                            "Waiting for {:?} before retrying...",
                                             RPC_RETRY_TIME
                                         );
                                         thread::sleep(RPC_RETRY_TIME);
@@ -194,7 +194,7 @@ fn submit_block(node: &Client, block: &Block, current_height: u64) -> bool {
                             bitcoincore_rpc::jsonrpc::Error::Transport(e) => {
                                 println!("Transport error while submitting block: {}", e);
                                 println!(
-                                    "Waiting for {:?} seconds before retrying...",
+                                    "Waiting for {:?} before retrying...",
                                     RPC_RETRY_TIME
                                 );
                                 thread::sleep(RPC_RETRY_TIME);
