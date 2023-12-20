@@ -219,6 +219,7 @@ dependencies = [
  "bitcoincore-rpc",
  "config",
  "csv",
+ "serde",
 ]
 
 [[package]]

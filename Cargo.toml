@@ -9,3 +9,4 @@ edition = "2021"
 bitcoincore-rpc = { git="https://github.com/0xb10c/rust-bitcoincore-rpc", branch="2023-12-v25-sendrawtransaction" }
 config = { version = "0.13.4", default-features = false, features = ["toml"] }
 csv = "1.3.0"
+serde = { version = "1.0.193", features = ["derive"] }

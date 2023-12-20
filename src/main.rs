@@ -29,6 +29,16 @@ fn rpc_client(settings: &Config, node: &str) -> Client {
     .unwrap()
 }
 
+#[derive(Debug, serde::Serialize)]
+struct ResultRow {
+    height: u64,
+    txid: Txid,
+    reject_reason: String,
+    vsize: usize,
+    inputs: usize,
+    outputs: usize,
+}
+
 fn main() {
     let settings = Config::builder()
         .add_source(config::File::with_name("config.toml"))
@@ -94,14 +104,15 @@ fn main() {
                 // rejected because they are "already known" (as the blocks
                 // are already known). We don't care about these cases and
                 // filter them out when we receive an error on submitblock.
-                csv_rows.push([
-                    current_height.to_string(),
-                    tx.txid().to_string(),
-                    reject_reason,
-                    tx.vsize().to_string(),
-                    tx.input.len().to_string(),
-                    tx.output.len().to_string(),
-                ]);
+                csv_rows.push(
+                    ResultRow{
+                        height: current_height,
+                        txid: tx.txid(),
+                        reject_reason,
+                        vsize: tx.vsize(),
+                        inputs: tx.input.len(),
+                        outputs: tx.output.len(),
+                    });
             } else {
                 test_node
                     .send_raw_transaction(tx, Some(Amount::MAX_MONEY), Some(Amount::MAX_MONEY))
@@ -112,10 +123,10 @@ fn main() {
         match test_node.submit_block(&block) {
             Ok(_) => {
                 for row in csv_rows.iter() {
-                    wtr.write_record(row.iter()).unwrap();
+                    wtr.serialize(&row).unwrap();
                     println!(
                         "Transaction rejected in block {}: txid={} reason={:?}",
-                        row[0], row[1], row[2]
+                        row.height, row.txid, row.reject_reason
                     );
                 }
                 csv_rows.clear();
