@@ -1,4 +1,4 @@
-use bitcoin_pool_identification::{default_data, PoolIdentification, DEFAULT_MAINNET_POOL_LIST};
+use bitcoin_pool_identification::{default_data, PoolIdentification};
 use bitcoincore_rpc::bitcoin::{Amount, Block, Network, Txid};
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 use config::Config;
