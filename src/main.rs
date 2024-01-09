@@ -1,4 +1,4 @@
-use bitcoin_pool_identification::{parse_json, PoolIdentification, DEFAULT_MAINNET_POOL_LIST};
+use bitcoin_pool_identification::{default_data, PoolIdentification, DEFAULT_MAINNET_POOL_LIST};
 use bitcoincore_rpc::bitcoin::{Amount, Block, Network, Txid};
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 use config::Config;
@@ -72,7 +72,7 @@ fn main() {
     let mut wtr = Writer::from_path(output_file.clone())
         .expect(&format!("Can't open output file {}", output_file));
 
-    let pools = parse_json(DEFAULT_MAINNET_POOL_LIST);
+    let pools = default_data(Network::Bitcoin);
 
     let mut current_height = start_height;
     while current_height <= data_node.get_block_count().unwrap() {
@@ -193,10 +193,7 @@ fn submit_block(node: &Client, block: &Block, current_height: u64) -> bool {
                             // error: Resource temporarily unavailable.
                             bitcoincore_rpc::jsonrpc::Error::Transport(e) => {
                                 println!("Transport error while submitting block: {}", e);
-                                println!(
-                                    "Waiting for {:?} before retrying...",
-                                    RPC_RETRY_TIME
-                                );
+                                println!("Waiting for {:?} before retrying...", RPC_RETRY_TIME);
                                 thread::sleep(RPC_RETRY_TIME);
                             }
                             _ => panic!("{}", e),
