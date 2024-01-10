@@ -4,6 +4,7 @@ use bitcoincore_rpc::jsonrpc;
 use bitcoincore_rpc::{Client, RpcApi};
 use config::Config;
 use csv::Writer;
+use std::fs::OpenOptions;
 use std::thread;
 use std::time;
 use std::time::Duration;
@@ -78,11 +79,18 @@ fn main() {
         start_height
     );
 
-    let output_file = settings
+    let output_filename = settings
         .get::<String>("output")
         .expect("No 'output' defined in the configuration");
-    let mut wtr = Writer::from_path(output_file.clone())
-        .expect(&format!("Can't open output file {}", output_file));
+
+    let output_file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(output_filename.clone())
+        .expect(&format!("Can't open output file {}", output_filename));
+
+    let mut wtr = Writer::from_writer(output_file);
 
     let pools = default_data(Network::Bitcoin);
 
