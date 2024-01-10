@@ -1,36 +1,48 @@
 use bitcoin_pool_identification::{default_data, PoolIdentification};
 use bitcoincore_rpc::bitcoin::{Amount, Block, Network, Txid};
-use bitcoincore_rpc::{Auth, Client, RpcApi};
+use bitcoincore_rpc::jsonrpc;
+use bitcoincore_rpc::{Client, RpcApi};
 use config::Config;
 use csv::Writer;
 use std::thread;
+use std::time;
 use std::time::Duration;
 
 const DUPLICATE_BLOCK_ERROR: &str = "\"duplicate\"";
 const TX_ALREADY_IN_MEMPOOL_REJECTION_REASON: &str = "txn-already-in-mempool";
 const RPC_RETRY_TIME: Duration = Duration::from_secs(5);
+const RPC_TIMEOUT: time::Duration = time::Duration::from_secs(60 * 5); // 5 minutes
 
 fn rpc_client(settings: &Config, node: &str) -> Client {
-    Client::new(
-        &format!(
-            "{}:{}",
-            settings
-                .get::<String>(&format!("nodes.{}.rpc_host", node))
-                .expect(&format!("need a rpc_host for the {} node", node)),
-            settings
-                .get::<u16>(&format!("nodes.{}.rpc_port", node))
-                .expect(&format!("need a rpc_port for the {} node", node)),
-        ),
-        Auth::UserPass(
+    let rpc_url = &format!(
+        "{}:{}",
+        settings
+            .get::<String>(&format!("nodes.{}.rpc_host", node))
+            .expect(&format!("need a rpc_host for the {} node", node)),
+        settings
+            .get::<u16>(&format!("nodes.{}.rpc_port", node))
+            .expect(&format!("need a rpc_port for the {} node", node)),
+    );
+
+    // Build a custom transport to be able to configure the timeout.
+    let custom_timeout_transport = jsonrpc::simple_http::Builder::new()
+        .url(rpc_url)
+        .expect("invalid rpc url")
+        .auth(
             settings
                 .get::<String>(&format!("nodes.{}.rpc_user", node))
                 .expect(&format!("need a rpc_user for the {} node", node)),
-            settings
-                .get::<String>(&format!("nodes.{}.rpc_pass", node))
-                .expect(&format!("need a rpc_pass for the {} node", node)),
-        ),
-    )
-    .unwrap()
+            Some(
+                settings
+                    .get::<String>(&format!("nodes.{}.rpc_pass", node))
+                    .expect(&format!("need a rpc_pass for the {} node", node)),
+            ),
+        )
+        .timeout(RPC_TIMEOUT)
+        .build();
+    Client::from_jsonrpc(jsonrpc::client::Client::with_transport(
+        custom_timeout_transport,
+    ))
 }
 
 #[derive(Debug, serde::Serialize)]
