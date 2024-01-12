@@ -5,13 +5,10 @@ use bitcoincore_rpc::{Client, RpcApi};
 use config::Config;
 use csv::Writer;
 use std::fs::OpenOptions;
-use std::thread;
 use std::time;
-use std::time::Duration;
 
 const DUPLICATE_BLOCK_ERROR: &str = "\"duplicate\"";
 const TX_ALREADY_IN_MEMPOOL_REJECTION_REASON: &str = "txn-already-in-mempool";
-const RPC_RETRY_TIME: Duration = Duration::from_secs(5);
 const RPC_TIMEOUT: time::Duration = time::Duration::from_secs(60 * 5); // 5 minutes
 
 fn rpc_client(settings: &Config, node: &str) -> Client {
@@ -137,37 +134,9 @@ fn main() {
                     outputs: tx.output.len(),
                 });
             } else {
-                loop {
-                    match test_node.send_raw_transaction(
-                        tx,
-                        Some(Amount::MAX_MONEY),
-                        Some(Amount::MAX_MONEY),
-                    ) {
-                        Ok(_) => break,
-                        Err(e) => match e {
-                            bitcoincore_rpc::Error::JsonRpc(e) => {
-                                // If we are sending blocks and transactions too fast, Bitcoin Core
-                                // RPC server receive buffer might fill up and we receive a transport
-                                // error: Resource temporarily unavailable.
-                                match e {
-                                    bitcoincore_rpc::jsonrpc::Error::Transport(e) => {
-                                        println!(
-                                            "Transport error while sending raw transaction: {}",
-                                            e
-                                        );
-                                        println!(
-                                            "Waiting for {:?} before retrying...",
-                                            RPC_RETRY_TIME
-                                        );
-                                        thread::sleep(RPC_RETRY_TIME);
-                                    }
-                                    _ => panic!("{}", e),
-                                }
-                            }
-                            _ => panic!("{}", e),
-                        },
-                    }
-                }
+                test_node
+                    .send_raw_transaction(tx, Some(Amount::MAX_MONEY), Some(Amount::MAX_MONEY))
+                    .expect(&format!("Could not send raw transaction {}", tx.txid()));
             }
         }
 
@@ -204,19 +173,6 @@ fn submit_block(node: &Client, block: &Block, current_height: u64) -> bool {
                             return false;
                         } else {
                             panic!("ReturnedError({})", s);
-                        }
-                    }
-                    bitcoincore_rpc::Error::JsonRpc(e) => {
-                        match e {
-                            // If we are sending blocks and transactions too fast, Bitcoin Core
-                            // RPC server receive buffer might fill up and we receive a transport
-                            // error: Resource temporarily unavailable.
-                            bitcoincore_rpc::jsonrpc::Error::Transport(e) => {
-                                println!("Transport error while submitting block: {}", e);
-                                println!("Waiting for {:?} before retrying...", RPC_RETRY_TIME);
-                                thread::sleep(RPC_RETRY_TIME);
-                            }
-                            _ => panic!("{}", e),
                         }
                     }
                     _ => panic!("{}", e),
