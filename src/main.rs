@@ -121,6 +121,15 @@ fn main() {
                 }
 
                 if reject_reason == REJECTION_REASON_TOO_LONG_MEMPOOL_CHAIN {
+                    for input in &tx.input {
+                        println!(
+                            "Transaction rejected in block {}: txid: {} reason: {:?} pool: {}",
+                            current_height, tx.txid(), reject_reason, pool_name.clone(),
+                        );
+                        let anchestors = test_node.get_mempool_anchestors(&input.previous_output.txid);
+                        println!("{:?}", anchestors);
+
+                    }
                     println!(
                         "Transaction rejected in block {}: txid: {} reason: {:?} pool: {}",
                         current_height, tx.txid(), reject_reason, pool_name.clone(),

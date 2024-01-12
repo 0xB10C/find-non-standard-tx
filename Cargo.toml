@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bitcoincore-rpc = { git="https://github.com/0xb10c/rust-bitcoincore-rpc", branch="2023-12-v25-sendrawtransaction" }
+#bitcoincore-rpc = { git="https://github.com/0xb10c/rust-bitcoincore-rpc", branch="2023-12-v25-sendrawtransaction" }
+bitcoincore-rpc = { git="https://github.com/0xb10c/rust-bitcoincore-rpc", branch="2023-12-fnsdt" }
 config = { version = "0.13.4", default-features = false, features = ["toml"] }
 csv = "1.3.0"
 bitcoin-pool-identification = { version = "0.3.2" }
