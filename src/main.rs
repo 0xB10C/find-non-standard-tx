@@ -8,7 +8,8 @@ use std::fs::OpenOptions;
 use std::time;
 
 const DUPLICATE_BLOCK_ERROR: &str = "\"duplicate\"";
-const TX_ALREADY_IN_MEMPOOL_REJECTION_REASON: &str = "txn-already-in-mempool";
+const REJECTION_REASON_TX_ALREADY_IN_MEMPOOL: &str = "txn-already-in-mempool";
+const REJECTION_REASON_TOO_LONG_MEMPOOL_CHAIN: &str = "too-long-mempool-chain";
 const RPC_TIMEOUT: time::Duration = time::Duration::from_secs(60 * 5); // 5 minutes
 
 fn rpc_client(settings: &Config, node: &str) -> Client {
@@ -115,8 +116,16 @@ fn main() {
                 // a transaction will be rejected for already being in the mempool.
                 // We don't care about these cases.
                 let reject_reason = result.reject_reason.clone().unwrap();
-                if reject_reason == TX_ALREADY_IN_MEMPOOL_REJECTION_REASON {
+                if reject_reason == REJECTION_REASON_TX_ALREADY_IN_MEMPOOL {
                     continue;
+                }
+
+                if reject_reason == REJECTION_REASON_TOO_LONG_MEMPOOL_CHAIN {
+                    println!(
+                        "Transaction rejected in block {}: txid: {} reason: {:?} pool: {}",
+                        current_height, tx.txid(), reject_reason, pool_name.clone(),
+                    );
+                    panic!("{}",REJECTION_REASON_TOO_LONG_MEMPOOL_CHAIN);
                 }
 
                 // When using -stopatheight=X, Bitcoin Core might already know
