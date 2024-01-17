@@ -10,6 +10,7 @@ use std::time;
 const DUPLICATE_BLOCK_ERROR: &str = "\"duplicate\"";
 const TX_ALREADY_IN_MEMPOOL_REJECTION_REASON: &str = "txn-already-in-mempool";
 const RPC_TIMEOUT: time::Duration = time::Duration::from_secs(60 * 5); // 5 minutes
+const MAX_FEE: Amount = Amount::from_int_btc(10000);
 
 fn rpc_client(settings: &Config, node: &str) -> Client {
     let rpc_url = &format!(
@@ -107,9 +108,7 @@ fn main() {
                 continue;
             }
 
-            let results = test_node
-                .test_mempool_accept(&[tx], Some(Amount::MAX_MONEY))
-                .unwrap();
+            let results = test_node.test_mempool_accept(&[tx], Some(MAX_FEE)).unwrap();
             let result = results.first().unwrap();
 
             if !result.allowed {
@@ -137,7 +136,7 @@ fn main() {
                 });
             } else {
                 test_node
-                    .send_raw_transaction(tx, Some(Amount::MAX_MONEY), Some(Amount::MAX_MONEY))
+                    .send_raw_transaction(tx, Some(MAX_FEE), Some(MAX_FEE))
                     .expect(&format!("Could not send raw transaction {}", tx.txid()));
             }
         }
