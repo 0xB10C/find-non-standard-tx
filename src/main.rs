@@ -107,7 +107,9 @@ fn main() {
                 continue;
             }
 
-            let results = test_node.test_mempool_accept(&[tx]).unwrap();
+            let results = test_node
+                .test_mempool_accept(&[tx], Some(Amount::MAX_MONEY))
+                .unwrap();
             let result = results.first().unwrap();
 
             if !result.allowed {

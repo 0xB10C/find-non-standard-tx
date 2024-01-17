@@ -75,7 +75,7 @@ dependencies = [
 [[package]]
 name = "bitcoincore-rpc"
 version = "0.18.0"
-source = "git+https://github.com/0xb10c/rust-bitcoincore-rpc?branch=2023-12-v25-sendrawtransaction#6a504fa4dfa6bb2d583132353b1e0fb963e633ab"
+source = "git+https://github.com/0xb10c/rust-bitcoincore-rpc?branch=2023-12-fnsdt#ec42b971990f7fd3f768cf1fddf9b01002420615"
 dependencies = [
  "bitcoincore-rpc-json",
  "jsonrpc",
@@ -87,7 +87,7 @@ dependencies = [
 [[package]]
 name = "bitcoincore-rpc-json"
 version = "0.18.0"
-source = "git+https://github.com/0xb10c/rust-bitcoincore-rpc?branch=2023-12-v25-sendrawtransaction#6a504fa4dfa6bb2d583132353b1e0fb963e633ab"
+source = "git+https://github.com/0xb10c/rust-bitcoincore-rpc?branch=2023-12-fnsdt#ec42b971990f7fd3f768cf1fddf9b01002420615"
 dependencies = [
  "bitcoin",
  "serde",
