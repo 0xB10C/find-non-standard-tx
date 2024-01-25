@@ -42,6 +42,8 @@ sequenceDiagram
 
 Known limitations:
 - Transactions depending on a rejected transaction are rejected as `missing-inputs`
+- Transactions might be rejected for multiple reasons. However, only one reason is returned
+- Transactions rejected due to mempool limits (e.g. `too-long-mempool-chain`) can't be analyzed statically without the mempool state
 - Does not report full-RBF replacements mined
 
 ## Setup
