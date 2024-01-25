@@ -4,6 +4,8 @@ use bitcoincore_rpc::jsonrpc;
 use bitcoincore_rpc::{Client, RpcApi};
 use config::Config;
 use csv::Writer;
+use env_logger::Env;
+use log::info;
 use std::fs::OpenOptions;
 use std::time;
 
@@ -56,6 +58,8 @@ struct ResultRow {
 }
 
 fn main() {
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+
     let settings = Config::builder()
         .add_source(config::File::with_name("config.toml"))
         .build()
@@ -145,7 +149,7 @@ fn main() {
         if block_was_unknown {
             for row in csv_rows.iter() {
                 wtr.serialize(&row).unwrap();
-                println!(
+                info!(
                     "Transaction rejected in block {}: txid: {} reason: {:?} pool: {}",
                     row.height, row.txid, row.reject_reason, row.miner,
                 );
@@ -170,7 +174,7 @@ fn submit_block(node: &Client, block: &Block, current_height: u64) -> bool {
                     // expected.
                     bitcoincore_rpc::Error::ReturnedError(s) => {
                         if s == DUPLICATE_BLOCK_ERROR {
-                            println!("Block {} is already known by the 'test' Bitcoin Core node. Skipping..", current_height);
+                            info!("Block {} is already known by the 'test' Bitcoin Core node. Skipping..", current_height);
                             return false;
                         } else {
                             panic!("ReturnedError({})", s);
