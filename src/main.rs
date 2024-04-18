@@ -55,6 +55,7 @@ struct ResultRow {
     vsize: usize,
     inputs: usize,
     outputs: usize,
+    fee: u64,
 }
 
 fn main() {
@@ -124,6 +125,11 @@ fn main() {
                     continue;
                 }
 
+                let info = data_node
+                    .get_raw_transaction_info_with_fee(&tx.txid(), Some(&block_hash))
+                    .unwrap();
+                let fee = info.fee.unwrap_or_default();
+
                 // When using -stopatheight=X, Bitcoin Core might already know
                 // about blocks at a height >X. In this case, transactions are
                 // rejected because they are "already known" (as the blocks
@@ -137,6 +143,7 @@ fn main() {
                     vsize: tx.vsize(),
                     inputs: tx.input.len(),
                     outputs: tx.output.len(),
+                    fee: fee.to_sat(),
                 });
             } else {
                 test_node
