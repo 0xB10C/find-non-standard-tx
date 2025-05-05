@@ -12,7 +12,12 @@ use std::time;
 const DUPLICATE_BLOCK_ERROR: &str = "\"duplicate\"";
 const TX_ALREADY_IN_MEMPOOL_REJECTION_REASON: &str = "txn-already-in-mempool";
 const RPC_TIMEOUT: time::Duration = time::Duration::from_secs(60 * 5); // 5 minutes
-const MAX_FEE: Amount = Amount::from_int_btc(10000);
+
+// Bitcoin Core won't allow anything larger or equal to 1 BTC here
+// since https://github.com/bitcoin/bitcoin/pull/29434. So use 1 BTC - 1 sat.
+// The burn amount can be higher.
+const MAX_FEE: Amount = Amount::from_sat(99_999_999);
+const MAX_BURN: Amount = Amount::from_sat(999_999_999);
 
 fn rpc_client(settings: &Config, node: &str) -> Client {
     let rpc_url = &format!(
@@ -147,7 +152,7 @@ fn main() {
                 });
             } else {
                 test_node
-                    .send_raw_transaction(tx, Some(MAX_FEE), Some(MAX_FEE))
+                    .send_raw_transaction(tx, Some(MAX_FEE), Some(MAX_BURN))
                     .expect(&format!("Could not send raw transaction {}", tx.txid()));
             }
         }
