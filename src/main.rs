@@ -131,7 +131,7 @@ fn main() {
                 }
 
                 let info = data_node
-                    .get_raw_transaction_info_with_fee(&tx.txid(), Some(&block_hash))
+                    .get_raw_transaction_info_with_fee(&tx.compute_txid(), Some(&block_hash))
                     .unwrap();
                 let fee = info.fee.unwrap_or_default();
 
@@ -143,7 +143,7 @@ fn main() {
                 csv_rows.push(ResultRow {
                     height: current_height,
                     miner: pool_name.clone(),
-                    txid: tx.txid(),
+                    txid: tx.compute_txid(),
                     reject_reason,
                     vsize: tx.vsize(),
                     inputs: tx.input.len(),
@@ -153,7 +153,10 @@ fn main() {
             } else {
                 test_node
                     .send_raw_transaction(tx, Some(MAX_FEE), Some(MAX_BURN))
-                    .expect(&format!("Could not send raw transaction {}", tx.txid()));
+                    .expect(&format!(
+                        "Could not send raw transaction {}",
+                        tx.compute_txid()
+                    ));
             }
         }
 
