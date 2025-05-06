@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bitcoincore-rpc = { git="https://github.com/0xb10c/rust-bitcoincore-rpc", branch="2023-12-fnsdt" }
+bitcoincore-rpc = { git = "https://github.com/0xb10c/rust-bitcoincore-rpc", branch = "2025-05-find-nonstandard-transactions" }
 config = { version = "0.13.4", default-features = false, features = ["toml"] }
 csv = "1.3.0"
-bitcoin-pool-identification = { version = "0.3.2" }
+bitcoin-pool-identification = { version = "0.3.7" }
 serde = { version = "1.0.193", features = ["derive"] }
 env_logger = "0.10.1"
 log = "0.4.20"
